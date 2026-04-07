@@ -1,0 +1,9 @@
+DBMS Notes
+==========
+
+1. ER Model and Diagrams
+2. Relational Model
+3. SQL - DDL, DML, DCL
+4. Normalization (1NF to BCNF)
+5. Transactions and ACID
+6. Concurrency Control

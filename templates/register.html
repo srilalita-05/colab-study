@@ -1,0 +1,178 @@
+{% extends "base.html" %}
+{% block title %}Register{% endblock %}
+
+{% block extra_style %}
+.auth-container {
+    max-width: 440px;
+    margin: 3rem auto;
+}
+.auth-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 2.5rem;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+.auth-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--accent-gradient);
+}
+.auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+.auth-header .auth-icon {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+    display: block;
+}
+.auth-header h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+.auth-header p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 0.3rem;
+}
+.auth-form .btn-primary {
+    width: 100%;
+    padding: 14px;
+    font-size: 1rem;
+    border-radius: var(--radius-md);
+    margin-top: 0.5rem;
+}
+.auth-footer {
+    text-align: center;
+    margin-top: 1.5rem;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+.password-toggle {
+    position: relative;
+}
+.password-toggle .toggle-btn {
+    position: absolute;
+    right: 12px; top: 50%; transform: translateY(-50%);
+    background: none; border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1.1rem;
+    padding: 4px;
+}
+.password-strength {
+    height: 4px;
+    border-radius: 2px;
+    margin-top: 6px;
+    background: var(--border-color);
+    overflow: hidden;
+}
+.password-strength-bar {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.3s ease, background 0.3s ease;
+    width: 0%;
+}
+.hint {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+}
+{% endblock %}
+
+{% block content %}
+<div class="auth-container">
+    <div class="auth-card">
+        <div class="auth-header">
+            <span class="auth-icon">🚀</span>
+            <h1>Create Account</h1>
+            <p>Join the learning community</p>
+        </div>
+        <form class="auth-form" method="POST" action="{{ url_for('register') }}" id="registerForm">
+            <div class="form-group">
+                <label class="form-label" for="username">Username</label>
+                <input type="text" id="username" name="username" class="form-input" placeholder="Choose a username" required minlength="3" autocomplete="username">
+                <div class="hint">At least 3 characters</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="email">Email</label>
+                <input type="email" id="email" name="email" class="form-input" placeholder="Enter your email" required autocomplete="email">
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="password">Password</label>
+                <div class="password-toggle">
+                    <input type="password" id="password" name="password" class="form-input" placeholder="Create a password" required minlength="6" autocomplete="new-password" oninput="checkStrength(this.value)">
+                    <button type="button" class="toggle-btn" onclick="togglePassword('password', this)">👁</button>
+                </div>
+                <div class="password-strength"><div class="password-strength-bar" id="strengthBar"></div></div>
+                <div class="hint">At least 6 characters</div>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="confirm_password">Confirm Password</label>
+                <div class="password-toggle">
+                    <input type="password" id="confirm_password" name="confirm_password" class="form-input" placeholder="Confirm your password" required autocomplete="new-password">
+                    <button type="button" class="toggle-btn" onclick="togglePassword('confirm_password', this)">👁</button>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Create Account</button>
+        </form>
+        <div class="auth-footer">
+            Already have an account? <a href="{{ url_for('login') }}">Sign in</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+function togglePassword(fieldId, btn) {
+    const field = document.getElementById(fieldId);
+    if (field.type === 'password') {
+        field.type = 'text';
+        btn.textContent = '🙈';
+    } else {
+        field.type = 'password';
+        btn.textContent = '👁';
+    }
+}
+
+function checkStrength(pw) {
+    const bar = document.getElementById('strengthBar');
+    let score = 0;
+    if (pw.length >= 6) score++;
+    if (pw.length >= 10) score++;
+    if (/[A-Z]/.test(pw)) score++;
+    if (/[0-9]/.test(pw)) score++;
+    if (/[^A-Za-z0-9]/.test(pw)) score++;
+    const pct = (score / 5) * 100;
+    bar.style.width = pct + '%';
+    if (score <= 1) bar.style.background = '#ef4444';
+    else if (score <= 3) bar.style.background = '#f59e0b';
+    else bar.style.background = '#10b981';
+}
+
+document.getElementById('registerForm').addEventListener('submit', function(e) {
+    const pw = document.getElementById('password').value;
+    const cpw = document.getElementById('confirm_password').value;
+    const username = document.getElementById('username').value.trim();
+    const email = document.getElementById('email').value.trim();
+
+    const errors = [];
+    if (username.length < 3) errors.push('Username must be at least 3 characters.');
+    if (!email.includes('@')) errors.push('Please enter a valid email.');
+    if (pw.length < 6) errors.push('Password must be at least 6 characters.');
+    if (pw !== cpw) errors.push('Passwords do not match.');
+
+    if (errors.length) {
+        e.preventDefault();
+        alert(errors.join('\n'));
+    }
+});
+</script>
+{% endblock %}

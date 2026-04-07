@@ -1,0 +1,9 @@
+Python Programming Notes
+========================
+
+1. Variables and Data Types
+2. Control Flow (if/else, loops)
+3. Functions and Modules
+4. Object-Oriented Programming
+5. File Handling
+6. Error Handling

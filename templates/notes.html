@@ -1,0 +1,201 @@
+{% extends "base.html" %}
+{% block title %}Browse Notes{% endblock %}
+
+{% block extra_style %}
+/* ================ SEARCH / FILTER BAR ================ */
+.filter-bar {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+.filter-bar .search-box {
+    flex: 1;
+    min-width: 250px;
+    position: relative;
+}
+.filter-bar .search-box .search-icon {
+    position: absolute;
+    left: 14px; top: 50%; transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 1rem;
+    pointer-events: none;
+}
+.filter-bar .search-box input {
+    padding-left: 42px;
+}
+.filter-bar .form-select {
+    max-width: 220px;
+}
+
+/* ================ NOTES GRID ================ */
+.note-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1.75rem;
+    transition: var(--transition);
+    display: flex;
+    flex-direction: column;
+    text-decoration: none;
+    color: inherit;
+}
+.note-card:hover {
+    border-color: var(--border-glow);
+    box-shadow: var(--shadow-glow);
+    transform: translateY(-4px);
+    color: inherit;
+}
+.note-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.75rem;
+    gap: 8px;
+}
+.note-card h3 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    line-height: 1.35;
+}
+.note-card .note-desc {
+    color: var(--text-secondary);
+    font-size: 0.88rem;
+    line-height: 1.6;
+    flex: 1;
+    margin-bottom: 0.75rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+.note-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 0.75rem;
+}
+.note-card-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    flex-wrap: wrap;
+}
+.note-card-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    white-space: nowrap;
+}
+
+/* ================ EMPTY STATE ================ */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-secondary);
+}
+.empty-state .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    display: block;
+    opacity: 0.5;
+}
+.empty-state h3 {
+    font-size: 1.3rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
+}
+.count-badge {
+    background: rgba(124,58,237,0.15);
+    color: #a78bfa;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+{% endblock %}
+
+{% block content %}
+<div class="page-header flex justify-between items-center flex-wrap gap-2">
+    <div>
+        <h1 class="page-title">Browse Notes</h1>
+        <p class="page-subtitle">Discover study materials shared by the community</p>
+    </div>
+    {% if current_user %}
+        <a href="{{ url_for('upload') }}" class="btn btn-primary">📤 Upload Notes</a>
+    {% endif %}
+</div>
+
+<!-- Search & Filter -->
+<form class="filter-bar" method="GET" action="{{ url_for('notes_list') }}">
+    <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" name="search" class="form-input" placeholder="Search by title, description, or tags..." value="{{ search }}">
+    </div>
+    <select name="subject" class="form-select" onchange="this.form.submit()">
+        <option value="">All Subjects</option>
+        {% for s in subjects %}
+            <option value="{{ s.subject }}" {% if selected_subject == s.subject %}selected{% endif %}>{{ s.subject }}</option>
+        {% endfor %}
+    </select>
+    <button type="submit" class="btn btn-secondary btn-sm">Search</button>
+    {% if search or selected_subject %}
+        <a href="{{ url_for('notes_list') }}" class="btn btn-sm" style="color:var(--text-muted);">✕ Clear</a>
+    {% endif %}
+</form>
+
+<!-- Results count -->
+{% if notes %}
+<div class="mb-2">
+    <span class="count-badge">{{ notes|length }} note{{ 's' if notes|length != 1 else '' }} found</span>
+</div>
+{% endif %}
+
+<!-- Notes Grid -->
+{% if notes %}
+<div class="grid-3">
+    {% for note in notes %}
+    <a href="{{ url_for('note_detail', note_id=note.id) }}" class="note-card">
+        <div class="note-card-header">
+            <span class="tag tag-subject">{{ note.subject }}</span>
+            {% if note.avg_rating %}
+                <span style="color:#fbbf24;font-size:0.85rem;font-weight:600;">⭐ {{ note.avg_rating }}</span>
+            {% endif %}
+        </div>
+        <h3>{{ note.title }}</h3>
+        <div class="note-desc">{{ note.description or 'No description provided.' }}</div>
+        {% if note.tags %}
+        <div class="note-tags">
+            {% for t in note.tags.split(',') %}
+                <span class="tag">{{ t.strip() }}</span>
+            {% endfor %}
+        </div>
+        {% endif %}
+        <div class="note-card-meta">
+            <span>👤 {{ note.username }}</span>
+            <span>❤️ {{ note.like_count }}</span>
+            <span>💬 {{ note.comment_count }}</span>
+            {% if note.rating_count %}
+                <span>📊 {{ note.rating_count }} rating{{ 's' if note.rating_count != 1 else '' }}</span>
+            {% endif %}
+        </div>
+    </a>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <span class="empty-icon">📭</span>
+    <h3>No notes found</h3>
+    <p>{% if search or selected_subject %}Try adjusting your search or filter.{% else %}Be the first to upload study notes!{% endif %}</p>
+    {% if current_user %}
+        <a href="{{ url_for('upload') }}" class="btn btn-primary mt-2">📤 Upload Notes</a>
+    {% endif %}
+</div>
+{% endif %}
+{% endblock %}

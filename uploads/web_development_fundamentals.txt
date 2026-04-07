@@ -1,0 +1,9 @@
+Web Development Notes
+====================
+
+1. HTML5 Semantic Elements
+2. CSS Flexbox and Grid
+3. JavaScript ES6+
+4. DOM Manipulation
+5. Fetch API and AJAX
+6. Responsive Design

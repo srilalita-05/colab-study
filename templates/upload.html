@@ -1,0 +1,173 @@
+{% extends "base.html" %}
+{% block title %}Upload Notes{% endblock %}
+
+{% block extra_style %}
+.upload-container {
+    max-width: 640px;
+    margin: 1rem auto;
+}
+.upload-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-xl);
+    padding: 2.5rem;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    overflow: hidden;
+}
+.upload-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: var(--accent-gradient);
+}
+.upload-header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+.upload-header .upload-icon {
+    font-size: 3rem;
+    margin-bottom: 0.75rem;
+    display: block;
+}
+.upload-header h1 {
+    font-size: 1.75rem;
+    font-weight: 800;
+}
+.upload-header p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin-top: 0.3rem;
+}
+
+/* File drop zone */
+.file-drop-zone {
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius-md);
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-bottom: 0.25rem;
+    position: relative;
+}
+.file-drop-zone:hover,
+.file-drop-zone.dragover {
+    border-color: var(--accent-primary);
+    background: rgba(124,58,237,0.06);
+}
+.file-drop-zone .drop-icon { font-size: 2.5rem; margin-bottom: 0.5rem; display: block; opacity: 0.6; }
+.file-drop-zone p { color: var(--text-muted); font-size: 0.9rem; }
+.file-drop-zone .browse-text { color: var(--accent-primary); font-weight: 600; }
+.file-drop-zone input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+.file-name-display {
+    font-size: 0.8rem;
+    color: var(--accent-secondary);
+    margin-top: 6px;
+    min-height: 1.2em;
+}
+.allowed-types {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 6px;
+}
+
+.upload-form .btn-primary {
+    width: 100%;
+    padding: 14px;
+    font-size: 1rem;
+    border-radius: var(--radius-md);
+    margin-top: 0.5rem;
+}
+{% endblock %}
+
+{% block content %}
+<div class="upload-container">
+    <div class="upload-card">
+        <div class="upload-header">
+            <span class="upload-icon">📤</span>
+            <h1>Upload Notes</h1>
+            <p>Share your study materials with the community</p>
+        </div>
+        <form class="upload-form" method="POST" action="{{ url_for('upload') }}" enctype="multipart/form-data" id="uploadForm">
+            <div class="form-group">
+                <label class="form-label" for="title">Title *</label>
+                <input type="text" id="title" name="title" class="form-input" placeholder="e.g. Introduction to Python" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="subject">Subject *</label>
+                <input type="text" id="subject" name="subject" class="form-input" placeholder="e.g. Computer Science" required>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="description">Description</label>
+                <textarea id="description" name="description" class="form-textarea" placeholder="Briefly describe what these notes cover..."></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label" for="tags">Tags</label>
+                <input type="text" id="tags" name="tags" class="form-input" placeholder="e.g. python, programming, basics (comma-separated)">
+            </div>
+            <div class="form-group">
+                <label class="form-label">File *</label>
+                <div class="file-drop-zone" id="dropZone">
+                    <span class="drop-icon">📁</span>
+                    <p>Drag & drop your file here or <span class="browse-text">browse</span></p>
+                    <input type="file" id="file" name="file" required>
+                </div>
+                <div class="file-name-display" id="fileName"></div>
+                <div class="allowed-types">Allowed: PDF, DOC, DOCX, TXT, PPTX, PPT, XLSX, XLS, PNG, JPG, ZIP (max 16 MB)</div>
+            </div>
+            <button type="submit" class="btn btn-primary" id="submitBtn">📤 Upload</button>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_script %}
+<script>
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('file');
+const fileNameDisplay = document.getElementById('fileName');
+
+// Drag & drop visual feedback
+['dragenter', 'dragover'].forEach(e => dropZone.addEventListener(e, () => dropZone.classList.add('dragover')));
+['dragleave', 'drop'].forEach(e => dropZone.addEventListener(e, () => dropZone.classList.remove('dragover')));
+
+// Show selected file name
+fileInput.addEventListener('change', function() {
+    if (this.files.length) {
+        fileNameDisplay.textContent = '📎 ' + this.files[0].name + ' (' + (this.files[0].size / 1024 / 1024).toFixed(2) + ' MB)';
+    } else {
+        fileNameDisplay.textContent = '';
+    }
+});
+
+// Form validation
+document.getElementById('uploadForm').addEventListener('submit', function(e) {
+    const title = document.getElementById('title').value.trim();
+    const subject = document.getElementById('subject').value.trim();
+    const file = fileInput.files[0];
+
+    const errors = [];
+    if (!title) errors.push('Title is required.');
+    if (!subject) errors.push('Subject is required.');
+    if (!file) errors.push('Please select a file.');
+    if (file && file.size > 16 * 1024 * 1024) errors.push('File size exceeds 16 MB limit.');
+
+    if (errors.length) {
+        e.preventDefault();
+        alert(errors.join('\n'));
+        return;
+    }
+
+    // Disable button to prevent double submission
+    document.getElementById('submitBtn').textContent = '⏳ Uploading...';
+    document.getElementById('submitBtn').disabled = true;
+});
+</script>
+{% endblock %}

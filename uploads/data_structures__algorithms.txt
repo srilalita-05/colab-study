@@ -1,0 +1,10 @@
+DSA Notes
+=========
+
+1. Arrays and Strings
+2. Linked Lists
+3. Stacks and Queues
+4. Trees and BST
+5. Graphs (BFS, DFS)
+6. Sorting Algorithms
+7. Dynamic Programming
